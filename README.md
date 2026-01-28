@@ -28,7 +28,10 @@ Note: On MacOS during the "Building picotool" step, if it says "exception file n
 
 ```
 rm -rf build
-cmake -B build \ -DCMAKE_C_COMPILER=clang \ -DCMAKE_CXX_COMPILER=clang++ \ -DCMAKE_OSX_SYSROOT=$(xcrun --show-sdk-path)
+cmake -B build \
+  -DCMAKE_C_COMPILER=clang \
+  -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_OSX_SYSROOT=$(xcrun --show-sdk-path)
 cmake --build build
 ```
 It forces cmake to use clang and clang++ instead of other compilers and tells it the path to the MacOS SDK.
