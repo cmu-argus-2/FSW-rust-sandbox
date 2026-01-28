@@ -1,5 +1,5 @@
 ## Argus Notes
-This repo is based off the <a href="https://github.com/rp-rs/rp-hal/tree/main/rp235x-hal-examples"><strong>rp-235x-hal-examples</a> folder in the <a href="https://github.com/rp-rs/rp-hal">rp-hal</a> repo.
+This repo is based off the <a href="https://github.com/rp-rs/rp-hal/tree/main/rp235x-hal-examples">rp-235x-hal-examples</a> folder in the <a href="https://github.com/rp-rs/rp-hal">rp-hal</a> repo.
 If there's anything confusing about the general rust setup outside of these notes, try checking them out.
 
 ## Getting Started
