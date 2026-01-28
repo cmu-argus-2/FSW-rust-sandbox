@@ -24,14 +24,14 @@ Next, install and build picotool. This can be found in Appendix B of <a href="ht
 
 Note: An issue when building picotool might be that you're missing the pico-sdk, so go to <a href="https://github.com/raspberrypi/pico-sdk">Raspberry Pi Pico SDK</a> and put it in the file ~/pico/pico-sdk (any path that matches the export in the building section).
 
-Note: On MacOS, if it says "exception file not found", try this command instead of the cmake command:
+Note: On MacOS during the "Building picotool" step, if it says "exception file not found", try this command instead of the cmake command:
 
 ```
 rm -rf build cmake -B build \ -DCMAKE_C_COMPILER=clang \ -DCMAKE_CXX_COMPILER=clang++ \ -DCMAKE_OSX_SYSROOT=$(xcrun --show-sdk-path) cmake --build build
 ```
 It forces cmake to use clang and clang++ instead of other compilers and tells it the path to the MacOS SDK.
 
-Then connect a usb cable to the Mainboard and set it in Boot mode (reset while pressing Boot). To flash a program onto the board and run it, do
+Then connect a usb cable to the Mainboard and set it to Boot mode (reset while pressing Boot). To flash a program onto the board and run it, do
 ```
 cargo run --bin blinky
 ```
