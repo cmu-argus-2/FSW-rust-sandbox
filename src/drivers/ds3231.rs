@@ -1,6 +1,7 @@
+use rp235x_hal as hal;
 use embedded_hal::i2c::I2c;
 use hal::i2c::Error as I2cError;
-use rp235x_hal as hal;
+use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 
 pub struct DS3231 {
     pub addr: u8,
@@ -10,6 +11,7 @@ pub struct DS3231 {
 pub enum Error {
     I2c(I2cError),
     LostPower,
+    InvalidTimestamp,
 }
 
 impl From<I2cError> for Error {
@@ -41,24 +43,56 @@ impl DS3231 {
         ((dec / 10) << 4) | (dec % 10)
     }
 
+    pub fn set_unix_time<I2C>(&self, i2c: &mut I2C, timestamp: i64) -> Result<(), Error>
+    where
+        I2C: I2c<Error = I2cError>,
+    {
+        let dt = NaiveDateTime::from_timestamp_opt(timestamp, 0)
+            .ok_or(Error::InvalidTimestamp)?;
+
+        let datetime = DateTime {
+            year: dt.year() as u16,
+            month: dt.month() as u8,
+            day: dt.day() as u8,
+            hour: dt.hour() as u8,
+            minute: dt.minute() as u8,
+            second: dt.second() as u8,
+        };
+
+        self.set_datetime(i2c, &datetime)
+    }
+
+    pub fn unix_time<I2C>(&self, i2c: &mut I2C) -> Result<i64, Error>
+    where
+        I2C: I2c<Error = I2cError>,
+    {
+        let dt = self.datetime(i2c)?;
+        let c_date = NaiveDate::from_ymd_opt(dt.year as i32, dt.month as u32, dt.day as u32)
+            .ok_or(Error::InvalidTimestamp)?;
+        let c_time = NaiveTime::from_hms_opt(dt.hour as u32, dt.minute as u32, dt.second as u32)
+            .ok_or(Error::InvalidTimestamp)?;
+        
+        Ok(NaiveDateTime::new(c_date, c_time).and_utc().timestamp())
+    }
+
     pub fn set_datetime<I2C>(&self, i2c: &mut I2C, dt: &DateTime) -> Result<(), Error>
     where
         I2C: I2c<Error = I2cError>,
     {
         let data = [
-            0x00, // Seconds register address
+            0x00,
             Self::dec_to_bcd(dt.second),
             Self::dec_to_bcd(dt.minute),
-            Self::dec_to_bcd(dt.hour),
-            0, // Day of week
+            Self::dec_to_bcd(dt.hour) & 0x3F, 
+            0,
             Self::dec_to_bcd(dt.day),
             Self::dec_to_bcd(dt.month),
             Self::dec_to_bcd((dt.year % 100) as u8),
         ];
 
         i2c.write(self.addr, &data)?;
-        i2c.write(self.addr, &[0x0E, 0x00])?; // Control: Enable oscillator
-        i2c.write(self.addr, &[0x0F, 0x00])?; // Status: Clear OSF
+        i2c.write(self.addr, &[0x0E, 0x00])?; 
+        i2c.write(self.addr, &[0x0F, 0x00])?; 
         Ok(())
     }
 
@@ -86,14 +120,5 @@ impl DS3231 {
         let mut buf = [0u8; 1];
         i2c.write_read(self.addr, &[0x0F], &mut buf)?;
         Ok((buf[0] & 0x80) != 0)
-    }
-
-    pub fn temperature<I2C>(&self, i2c: &mut I2C) -> Result<f32, Error>
-    where
-        I2C: I2c<Error = I2cError>,
-    {
-        let mut buf = [0u8; 2];
-        i2c.write_read(self.addr, &[0x11], &mut buf)?;
-        Ok(buf[0] as i8 as f32 + (buf[1] >> 6) as f32 * 0.25)
     }
 }
